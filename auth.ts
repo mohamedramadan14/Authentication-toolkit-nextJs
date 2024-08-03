@@ -1,13 +1,27 @@
-import GitHub from "next-auth/providers/github";
-import Google from "next-auth/providers/google";
 import authConfig from "@/auth.config";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/lib/db";
 import { getUserById } from "./utils/data/user";
-import NextAuth, { type DefaultSession } from "next-auth";
+import NextAuth from "next-auth";
 import { UserRole } from "@prisma/client";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
+  pages:{
+      signIn: '/auth/login',
+      error: '/auth/error'
+  },
+  events: {
+    linkAccount: async ({ user }) => {
+      await db.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          emailVerified: new Date(),
+        },
+      })
+    }
+  },
   callbacks: {
   /*   async signIn({ user }) {
       if(!user.id) return false
