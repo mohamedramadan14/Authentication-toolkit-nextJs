@@ -11,48 +11,50 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { loginSchema } from "@/schemas";
+import { registerSchema } from "@/schemas";
 import { z } from "zod";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FormError } from "@/components/FormError";
 import { FormSuccess } from "../FormSuccess";
-import { login } from "@/actions/login";
 import { useState, useTransition } from "react";
+import { register } from "@/actions/register";
 
-export const LoginForm = () => {
+export const RegisterForm = () => {
   const[isPending , startTransition] = useTransition();
   const[error , setError] = useState<string>("");
   const [success , setSuccess] = useState<string>("");
 
-  const form = useForm<z.infer<typeof loginSchema>>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<z.infer<typeof registerSchema>>({
+    resolver: zodResolver(registerSchema),
     defaultValues: {
+      name:"",
       email: "",
       password: "",
     },
   });
 
   
-const onSubmitHandler = (values: z.infer<typeof loginSchema>) => {
+const onSubmitHandler = (values: z.infer<typeof registerSchema>) => {
   setError("");
   setSuccess("");
 
   startTransition(() => {
-    login(values).then((data) =>{
-      setError(data?.error? data.message : "");
-      if(data?.message)
-      setSuccess(data?.message ? data.message : "");
+    register(values).then((data) =>{
+      setError(data.error? data.message : "");
+      setSuccess(data.success ? data.message : "");
     });
   })
+
+ console.log(values);
 }
 
   return (
     <CardWrapper
-      headerLabel="Welcome Back"
-      backButtonLabel="Don't have an account?"
-      backButtonHref="/auth/register"
+      headerLabel="Create an account"
+      backButtonLabel="Already have an account?"
+      backButtonHref="/auth/login"
       showSocial
     >
       <Form {...form}>
@@ -61,6 +63,19 @@ const onSubmitHandler = (values: z.infer<typeof loginSchema>) => {
           onSubmit={form.handleSubmit(onSubmitHandler)}
         >
           <div className="space-y-6">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input type="text" placeholder="joe doe" {...field} disabled={isPending}/>
+                </FormControl>
+                <FormMessage /> 
+              </FormItem>
+            )}
+          ></FormField>
           <FormField
             control={form.control}
             name="email"
@@ -91,7 +106,7 @@ const onSubmitHandler = (values: z.infer<typeof loginSchema>) => {
             <FormError message={error} />
             <FormSuccess message={success} />
              <Button type="submit" className="w-full bg-indigo-900 text-white" disabled={isPending}>
-                Login
+                Create an account
               </Button> 
         </form>
       </Form>
