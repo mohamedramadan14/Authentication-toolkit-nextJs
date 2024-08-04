@@ -105,7 +105,7 @@ const onSubmitHandler = (values: z.infer<typeof registerSchema>) => {
           </div>
             <FormError message={error} />
             <FormSuccess message={success} />
-             <Button type="submit" className="w-full bg-indigo-900 text-white" disabled={isPending}>
+             <Button type="submit" className="w-full bg-gradient-to-r from-slate-500 to-slate-800 text-white" disabled={isPending}>
                 Create an account
               </Button> 
         </form>

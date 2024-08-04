@@ -12,7 +12,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { loginSchema } from "@/schemas";
-import { z } from "zod";
+import { z, ZodError } from "zod";
 
 import { useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,13 @@ import { Button } from "@/components/ui/button";
 import { FormError } from "@/components/FormError";
 import { FormSuccess } from "../FormSuccess";
 import { login } from "@/actions/login";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
+
+
+type LoginResponse = 
+  | { error: ZodError<{ email: string; password: string; }>; message: string; success?: never }
+  | { error: boolean; message: string; success?: never }
+  | { error: boolean; message: string; success: boolean };
 
 export const LoginForm = () => {
   const searchParams = useSearchParams();
@@ -29,6 +35,13 @@ export const LoginForm = () => {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
+  const[showAlert , setShowAlert] = useState<boolean>(false)
+
+  useEffect(()=>{
+    setShowAlert(true)
+    const timeoutId = setTimeout(()=>setShowAlert(false), 5000)
+    return ()=> clearTimeout(timeoutId)
+  },[success , error])
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -37,15 +50,19 @@ export const LoginForm = () => {
       password: "",
     },
   });
-
   const onSubmitHandler = (values: z.infer<typeof loginSchema>) => {
     setError("");
     setSuccess("");
-
+  
     startTransition(() => {
-      login(values).then((data) => {
+      login(values).then((data : any) => {
         setError(data?.error ? data.message : "");
-        if (data?.message) setSuccess(data?.message ? data.message : "");
+        if (data?.success !== undefined) {
+          setSuccess(data?.message ? data.message : "");
+        }
+      }).catch((error) => {
+        // Handle any potential errors from the login function
+        setError(error.message || "An error occurred");
       });
     });
   };
@@ -100,11 +117,11 @@ export const LoginForm = () => {
               )}
             ></FormField>
           </div>
-          <FormError message={error || urlError} />
-          <FormSuccess message={success} />
+          {showAlert && <FormError message={error || urlError} />}
+          {showAlert && <FormSuccess message={success} />}
           <Button
             type="submit"
-            className="w-full bg-indigo-900 text-white"
+            className="w-full bg-gradient-to-r from-slate-500 to-slate-800 text-white"
             disabled={isPending}
           >
             Login

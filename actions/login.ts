@@ -5,6 +5,9 @@ import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
 import { loginSchema } from "@/schemas";
 import { z } from "zod";
 import { AuthError } from "next-auth";
+import { getUserByEmail } from "@/utils/data/user";
+import { generateVerificationToken } from "@/utils/data/tokens";
+import { sendVerificationEmail } from "@/lib/mail";
 
 export const login = async (values: z.infer<typeof loginSchema>) => {
   const validatedFields = loginSchema.safeParse(values);
@@ -15,6 +18,26 @@ export const login = async (values: z.infer<typeof loginSchema>) => {
 
   const { email, password } = validatedFields.data;
 
+  const existingUser = await getUserByEmail(email);
+
+  if(!existingUser || !existingUser.email){
+    return {error: true , message: "Invalid credentials!"}
+  }
+
+  if(!existingUser.password){
+  return {error: true , message: "Invalid credentials!"};
+  }
+
+  /**
+   * TODO: check if email is verified
+   * TODO: check if token is expired or not if YES: generate new one and inform user to verify email else just inform it to verify the email
+   */
+  if(!existingUser.emailVerified){
+    const verificationToken =await generateVerificationToken(existingUser.email);
+    await sendVerificationEmail(verificationToken.email , verificationToken.token);
+    return {success: true , message: "Confirmation Email sent!. Please verify your email!"}
+  }
+  
   try {
     await signIn("credentials", {
       email,
