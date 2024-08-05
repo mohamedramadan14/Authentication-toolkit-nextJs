@@ -11,24 +11,20 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { loginSchema } from "@/schemas";
-import { z, ZodError } from "zod";
 
-import { useSearchParams } from "next/navigation";
+import { z } from "zod";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FormError } from "@/components/FormError";
 import { FormSuccess } from "../FormSuccess";
-import { login } from "@/actions/login";
 import { useEffect, useState, useTransition } from "react";
-import Link from "next/link";
+import { resetSchema } from "@/schemas";
+import { resetPassword } from "@/actions/reset-password";
 
 
 
-export const LoginForm = () => {
-  const searchParams = useSearchParams();
-  const urlError = searchParams.get("error") === "OAuthAccountNotLinked" ? "Please use the same method you use to register your account" : "";
-
+export const ResetForm = () => {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
@@ -40,25 +36,26 @@ export const LoginForm = () => {
     return ()=> clearTimeout(timeoutId)
   },[success , error])
 
-  const form = useForm<z.infer<typeof loginSchema>>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<z.infer<typeof resetSchema>>({
+    resolver: zodResolver(resetSchema),
     defaultValues: {
       email: "",
-      password: "",
     },
   });
-  const onSubmitHandler = (values: z.infer<typeof loginSchema>) => {
+  const onSubmitHandler = (values: z.infer<typeof resetSchema>) => {
+    console.log(values);
+    
     setError("");
     setSuccess("");
   
     startTransition(() => {
-      login(values).then((data : any) => {
+      resetPassword(values).then((data : any) => {
         setError(data?.error ? data.message : "");
         if (data?.success !== undefined) {
           setSuccess(data?.message ? data.message : "");
         }
       }).catch((error) => {
-        // Handle any potential errors from the login function
+        // Handle any potential errors from the send reset email functionality
         setError(error.message || "An error occurred");
       });
     });
@@ -66,10 +63,9 @@ export const LoginForm = () => {
 
   return (
     <CardWrapper
-      headerLabel="Welcome Back"
-      backButtonLabel="Don't have an account?"
-      backButtonHref="/auth/register"
-      showSocial
+      headerLabel="Forgot your password?"
+      backButtonLabel="Back to login"
+      backButtonHref="/auth/login"
     >
       <Form {...form}>
         <form
@@ -95,36 +91,15 @@ export const LoginForm = () => {
                 </FormItem>
               )}
             ></FormField>
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="**********"
-                      {...field}
-                      disabled={isPending}
-                    />
-                  </FormControl>
-                  <Button size="sm" variant="link" asChild className="px-0 font-normal">
-                    <Link href="/auth/reset">Forgot Password?</Link>
-                  </Button>
-                  <FormMessage />
-                </FormItem>
-              )}
-            ></FormField>
           </div>
-          {showAlert && <FormError message={error || urlError} />}
+          {showAlert && <FormError message={error} />}
           {showAlert && <FormSuccess message={success} />}
           <Button
             type="submit"
             className="w-full bg-gradient-to-r from-slate-500 to-slate-800 text-white"
             disabled={isPending}
           >
-            Login
+            Send Reset Email
           </Button>
         </form>
       </Form>
