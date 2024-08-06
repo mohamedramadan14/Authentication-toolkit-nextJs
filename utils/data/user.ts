@@ -14,7 +14,7 @@ export const getUserByEmail = async (email: string) => {
   }
 };
 
-export const getUserById = async (id: string) => {
+export const getUserById = async (id?: string) => {
   try {
     const existingUser = await db.user.findFirst({
       where: {
