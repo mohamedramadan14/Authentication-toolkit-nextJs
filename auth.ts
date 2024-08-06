@@ -5,6 +5,7 @@ import { getUserById } from "./utils/data/user";
 import NextAuth from "next-auth";
 import { UserRole } from "@prisma/client";
 import { getTwoFactorConfirmationByUserId } from "@/utils/data/two-factor-confirmation";
+import { redirect } from "next/navigation";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   pages: {
@@ -24,6 +25,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     },
   },
   callbacks: {
+  
     async signIn({ user, account }) {
       // Allow OAuth to sign in
       if (account?.provider !== "credentials") return true;
@@ -35,21 +37,21 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       if (!existingUser?.emailVerified) return false;
 
       // TODO: 2FA
-      if(existingUser.isTwoFactorEnabled){
-        const twoFactorConfirmation = await getTwoFactorConfirmationByUserId(existingUser.id);
+      if (existingUser.isTwoFactorEnabled) {
+        const twoFactorConfirmation = await getTwoFactorConfirmationByUserId(
+          existingUser.id
+        );
         console.log({
-          twoFactorConfirmation
+          twoFactorConfirmation,
         });
-        if(!twoFactorConfirmation) return false;
+        if (!twoFactorConfirmation) return false;
         // DELETE twoFactorConfirmation
-       
-        
+
         await db.twoFactorConfirmation.delete({
           where: {
-            id: twoFactorConfirmation.id
-          }
-        })
-
+            id: twoFactorConfirmation.id,
+          },
+        });
       }
       return true;
     },

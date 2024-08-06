@@ -33,8 +33,8 @@ export const LoginForm = () => {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
-  const [showAlert, setShowAlert] = useState<boolean>(false);
   const [showTwoFactor, setShowTwoFactor] = useState<boolean>(false);
+  const [showAlert, setShowAlert] = useState<boolean>(false);
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -46,39 +46,36 @@ export const LoginForm = () => {
   });
 
   useEffect(() => {
-    setShowAlert(true);
-    const timeoutId = setTimeout(() => setShowAlert(false), 5000);
-    return () => clearTimeout(timeoutId);
-  }, [success, error]);
-
-  useEffect(() => {
-    if (showTwoFactor) {
-      form.setValue("code", "");
-    } else {
-      form.setValue("email", "");
-      form.setValue("password", "");
+    if (error || success) {
+      setShowAlert(true);
+      const timeoutId = setTimeout(() => setShowAlert(false), 5000);
+      return () => clearTimeout(timeoutId);
     }
-  }, [showTwoFactor, form]);
+  }, [error, success]);
 
-  const onSubmitHandler = (values: z.infer<typeof loginSchema>) => {
+  const onSubmit = (values: z.infer<typeof loginSchema>) => {
     setError("");
     setSuccess("");
+    setShowAlert(false);
 
     startTransition(() => {
       login(values)
         .then((data: any) => {
-          if (data.error) {
+          if (data?.error) {
+            form.reset()
             setError(data.message || "Something went wrong!");
-          } else if (data.success) {
+          }
+          if (data?.success) {
+            setError("");
             setSuccess(data.message || "Success!");
           }
-          if (data.twoFactor) {
+          if (data?.twoFactor) {
             setShowTwoFactor(true);
           }
         })
         .catch((error) => {
           setError(error.message || "Something went wrong!");
-        });
+        })
     });
   };
 
@@ -92,7 +89,7 @@ export const LoginForm = () => {
       <Form {...form}>
         <form
           className="flex flex-col space-y-6"
-          onSubmit={form.handleSubmit(onSubmitHandler)}
+          onSubmit={form.handleSubmit(onSubmit)}
         >
           <div className="space-y-4">
             {showTwoFactor ? (

@@ -97,9 +97,7 @@ export const login = async (values: z.infer<typeof loginSchema>) => {
       const twoFactorToken = await generateTwoFactorToken(existingUser.email);
       await sendTwoCodeEmail(twoFactorToken.email, twoFactorToken.token);
       return {
-        success: true,
         twoFactor: true,
-        message: "Two Factor Email sent!. Please verify your login!",
       };
     }
   }
